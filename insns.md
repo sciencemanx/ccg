@@ -1,0 +1,181 @@
+# List of Supported Instructions
+- ADD 
+    - flags
+        - all according
+    - operands
+        - r/m, imm
+        - r/m, r
+        - r, r/m
+- AND
+    - flags
+        - AF undef
+        - OF/CF clear
+        - SF/ZF/PF according
+    - operands
+        - r/m, imm
+        - r/m, r
+        - r, r/m
+- CALL
+    - flags
+        - none
+    - operands
+        - rel
+        - r/m
+- CBW/CWDE/CDQE
+    - flags
+        - none
+    - sign extends AL/AX/EAX to next larger size
+- CWD/CDW/CQO
+    - flags
+        - none
+    - sign extends AX/EAX/RAX into DX/EDX/RDX
+- CMP
+    - flags
+        - all according
+    - operands
+        - r/m, imm
+        - r/m, r
+        - r, r/m
+- DEC
+    - flags
+        - CF not affected
+        - OF/SF/ZF/AF/PF according
+    - operands
+        - r/m
+- DIV
+    - flags
+        - all undef
+    - unsigned divide
+    - divide AX/DX:AX/EDX:EAX/RDX:RAX by source 
+    - quot = AL/AX/EAX/RAX, mod = AH/DX/EDX/RDX
+    - operands
+        - r/m
+- IDIV
+    - flags
+        - all undef
+    - signed divide
+    - divide AX/DX:AX/EDX:EAX/RDX:RAX by source 
+    - quot = AL/AX/EAX/RAX, rem = AH/DX/EDX/RDX
+    - operands
+        - r/m
+- IMUL
+    - flags
+        - ZF/AF/PF undef
+        - SF MSB of operand-size-truncated result in destination
+        - CF/OF fuckall
+    - signed multiply
+    - operands
+        - r/m (AX/DX:AX/EDX:EAX/RDX:RAX <- AL/AX/EAX/RAX * s)
+        - r, r/m (d <- d * s)
+        - r, r/m, imm (d <- s * c)
+- INC
+    - flags
+        - CF not affected
+        - OF/SF/ZF/AF/PF according
+    - operands
+        - r/m
+- JMP
+    - flags
+        - none
+    - operands
+        - rel
+        - r/m
+- Jcc
+    - flags
+        - none
+    - operands
+        - rel
+- LEA
+    - flags
+        - none
+    - operands
+        - r, m
+- MOV
+    - flags
+        - none
+    - operands
+        - r/m, r
+        - r, r/m
+        - r/m, imm
+        - TODO: look up moffs
+- MUL
+    - flags
+        - OF/CF = (upper half == 0) ? 0 : 1
+        - SF/ZF/AF/PF undef
+    - unsigned multiply
+    - operands
+        - r/m (AX/DX:AX/EDX:EAX/RDX:RAX <- AL/AX/EAX/RAX * s)
+- NEG
+    - flags
+        - CF = (s == 0) ? 0 : 1
+        - OF/SF/ZF/AF/PF according
+    - twos complement
+    - operands
+        - r/m
+- NOP
+    - does nothing
+    - operands
+        - _
+        - r/m
+- NOT
+    - flags
+        - none
+    - operands
+        - r/m
+- OR
+    - flags
+        - OF/CF cleared
+        - SF/ZF/PF according
+        - AF undef
+    - operands
+        - r/m, imm
+        - r/m, r
+        - r, r/m
+- POP
+    - flags
+        - none
+    - operands
+        - r/m
+- PUSH
+    - flags
+        - none
+    - operands
+        - r/m
+        - imm
+- SAL/SAR/SHL/SHR
+    - flags
+        - CF/OF fuck all
+        - SF/ZF/PF according (unless count is 0)
+        - AF undef
+    - SAL/SAR: artithmetic (preserves sign bit)
+    - SHL/SHR: logical (normal shifts)
+    - operands
+        - r/m, imm
+        - r/m, CL
+- SUB
+    - flags
+        - all according
+    - operands
+        - r/m, imm
+        - r/m, r
+        - r, r/m
+- TEST
+    - flags
+        - OF/CF cleared
+        - SF/ZF/PF according
+        - AF undef
+    - operands
+        - r/m, imm
+        - r/m, r
+
+
+# List of Considered Instructions
+- CMOVcc
+- ENTER
+- INT
+- LEAVE
+- LOOP
+- LOOPcc
+- SETcc
+- STOxx
+- SYSxxxx
