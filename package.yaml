@@ -27,6 +27,7 @@ dependencies:
 - text
 - elf
 - mmap
+- containers
 
 library:
   source-dirs: src
