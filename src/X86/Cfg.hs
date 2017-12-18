@@ -1,6 +1,12 @@
 module X86.Cfg 
     ( construct
+    , mkPreds
+    , mkCalls
     , Cfg(..)
+    , SuccMap
+    , PredMap
+    , InsnMap
+    , CallMap
     ) where
 
 import Prelude hiding (succ)
@@ -18,47 +24,48 @@ import X86.Insn
 type Addr = Word64
 
 type InsnMap = Map.Map Addr Insn
-type SuccMap = Map.Map Addr (Maybe Addr)
-type BranchMap = Map.Map Addr (Maybe Addr)
+type SuccMap = Map.Map Addr [Addr]
 type CallMap = Map.Map Addr Addr
+type PredMap = Map.Map Addr [Addr]
 
 data Cfg = Cfg 
     { elf :: Elf
+    , entry :: Addr
     , insns :: InsnMap
     , succs :: SuccMap
-    , branches :: BranchMap
     } deriving (Eq)
 
 instance Show Cfg where
     show Cfg {insns = is} = show is
 
+mkPreds :: Cfg -> PredMap
+mkPreds Cfg {entry = entry, succs = succs} =
+    Map.foldrWithKey addSuccs (Map.singleton entry []) succs
+  where
+    addSuccs addr succs preds = foldr (addSucc addr) preds succs
+    addSucc addr succ preds = Map.insertWith (++) succ [addr] preds
+
 jmpTarget insn = case target of
-    (Imm n) -> addr + sz + n
+    (Imm addr) -> addr
     _ -> error $ show target ++ ": only supports relative jump right now"
   where
-    addr = address insn
-    sz = size insn
     target = value $ head $ operands insn
 
-succ insn = case instr insn of
-    (X86.X86InsRet) -> Nothing
-    (X86.X86InsJmp) -> Just $ jmpTarget insn
-    _ -> Just $ addr + sz
+succ insn
+    | i == X86.X86InsRet       = []
+    | i == X86.X86InsJmp       = [jmpTarget insn]
+    | elem X86.X86GrpJump grps = [next, jmpTarget insn]
+    | otherwise                = [next]
   where
-    addr = address insn
-    sz = size insn
-
-branch insn = case (instr insn, groups insn) of
-    (X86.X86InsJmp, _) ->
-        Nothing
-    (_, grps) ->
-        if elem X86.X86GrpJump grps then Just $ jmpTarget insn else Nothing
+    i = instr insn
+    grps = groups insn
+    next = address insn + size insn
 
 getCall :: Addr -> Insn -> Maybe Addr
 getCall addr insn = Nothing
 
-extractCalls :: InsnMap -> CallMap
-extractCalls = Map.foldrWithKey addInsn Map.empty
+mkCalls :: InsnMap -> CallMap
+mkCalls = Map.foldrWithKey addInsn Map.empty
   where 
     addInsn addr insn calls = maybe calls (addCall calls addr) (getCall addr insn)
     addCall calls addr target = Map.insert addr target calls
@@ -69,19 +76,17 @@ recDecent cfg (addr:wl) =
         Nothing -> recDecent cfg wl
         Just insn -> recDecent cfg' wl'
           where
-            cfg' = Cfg {elf = e, insns = insns', succs = succs', branches = branches'}
-            wl' = filter (not . visited) ((maybeToList s) ++ (maybeToList b))
+            cfg' = Cfg {elf = e, entry = entry, insns = insns', succs = succs'}
+            wl' = filter (not . visited) s
             visited addr = Map.member addr insns'             
             insns' = Map.insert addr insn insns
             succs' = Map.insert addr s succs
-            branches' = Map.insert addr b branches
             s = succ insn
-            b = branch insn
             addr = address insn
   where
-    Cfg {elf = e, insns = insns, succs = succs, branches = branches} = cfg
+    Cfg {elf = e, entry = entry, insns = insns, succs = succs} = cfg
 
 construct :: Elf -> Addr -> Cfg
 construct elf addr = recDecent init [addr]
   where 
-    init = Cfg {elf = elf, insns = Map.empty, succs = Map.empty, branches = Map.empty}
+    init = Cfg {elf = elf, entry = addr, insns = Map.empty, succs = Map.empty}
