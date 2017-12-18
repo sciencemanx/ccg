@@ -9,6 +9,7 @@ module X86.Insn
     ) where
 
 import Data.Word (Word8, Word32, Word64)
+import Data.Int
 import Data.Maybe (fromJust)
 
 import qualified Hapstone.Internal.Capstone as Capstone
@@ -64,13 +65,14 @@ data Instr =
     | Shl
     | Shr
     | Sub
-    | Test deriving (Eq, Show)
+    | Test
+    | Xor deriving (Eq, Show)
 
 data MemStruct = MemStruct
-    { base :: X86.X86Reg
-    , index :: X86.X86Reg
-    , scale :: Word32
-    , disp :: Word64
+    { base :: BaseReg
+    , index :: BaseReg
+    , scale :: Int32
+    , disp :: Int64
     } deriving (Eq, Show)
 
 data OpValue =
@@ -178,13 +180,21 @@ fromCsReg X86.X86RegR15w    = (R15, X)
 fromCsReg X86.X86RegR15d    = (R15, E)
 fromCsReg X86.X86RegR15     = (R15, R)
 
+fromCsOpMemStruct m = MemStruct 
+    { base = base
+    , index = index
+    , scale = scale
+    , disp = disp
+    }
+  where
+    (base, _) = fromCsReg $ X86.base m
+    (index, _) = fromCsReg $ X86.index m 
+    scale = X86.scale m
+    disp = X86.disp' m
+
 fromCsOpValue (X86.Reg r) = (uncurry Reg) $ fromCsReg r
 fromCsOpValue (X86.Imm n) = Imm n
-fromCsOpValue (X86.Mem m) = Mem MemStruct { base = X86.base m
-                                          , index = X86.index m 
-                                          , scale = fromIntegral $ X86.scale m
-                                          , disp = fromIntegral $ X86.disp' m
-                                          }
+fromCsOpValue (X86.Mem m) = Mem $ fromCsOpMemStruct m
 
 fromCsOp :: X86.CsX86Op -> Op
 fromCsOp csop = Op { value = val, width = sz  }
