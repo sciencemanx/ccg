@@ -4,11 +4,16 @@ module X86.FlagState
     , FlagMap(..)
     ) where
 
+import Debug.Trace
+
 import Data.Word
 import qualified Data.Map as Map
 
+import qualified Hapstone.Internal.X86 as X86
+
 import Common
 import qualified Two.Insn as Insn2
+import qualified X86.Insn as InsnX
 import qualified X86.Cfg as Cfg
 
 data FlagState =
@@ -19,7 +24,13 @@ data FlagState =
 
 type FlagMap = Map.Map Addr FlagState
 
-flow insn state = Top
+flow :: (InsnX.Op -> Insn2.Op) -> InsnX.Insn -> FlagState -> FlagState
+flow lift insn state = case (instr, ops) of
+    (X86.X86InsCmp, [l, r]) -> Flags (lift l ,Insn2.Minus, lift r)
+    _ -> state
+  where
+    instr = InsnX.instr insn
+    ops = InsnX.operands insn
 
 join :: [FlagState] -> FlagState
 join states = foldl join2 Bottom states
@@ -29,20 +40,21 @@ join states = foldl join2 Bottom states
     join2 Bottom flags = flags
     join2 _ _ = Top
 
+empty :: FlagState
 empty = Bottom
 
 m ! k = case Map.lookup k m of
     Just v -> v
     Nothing -> error (show k ++ "not found in ins/outs in flagstate")
 
-analyze :: Cfg.Cfg -> FlagMap
-analyze cfg = analyze' init init [entry]
+analyze :: (InsnX.Op -> Insn2.Op) -> Cfg.Cfg -> FlagMap
+analyze lift cfg = analyze' init init (Map.keys insns)
   where
     analyze' ins outs [] = ins
     analyze' ins outs (addr:wl) =
         let in' = join $ map (\p -> outs ! p) (preds ! addr) in
-        let out' = flow insn in' in
-        let ins' = Map.insert addr in'  ins
+        let out' = flow lift insn in' in
+        let ins' = Map.insert addr in' ins
             outs' = Map.insert addr out' outs in
         let wl' = if out == out' then wl else (succs ! addr) ++ wl in
         analyze' ins' outs' wl'
@@ -50,7 +62,6 @@ analyze cfg = analyze' init init [entry]
         out = outs ! addr
         insn = insns ! addr
     init = Map.map (const empty) insns
-    entry = Cfg.entry cfg
     insns = Cfg.insns cfg
     succs = Cfg.succs cfg
     preds = Cfg.mkPreds cfg
