@@ -36,7 +36,7 @@ data Cfg = Cfg
     } deriving (Eq)
 
 instance Show Cfg where
-    show Cfg {insns = is} = show is
+    show Cfg {insns = is, succs = s} = "Cfg{insns=" ++ show is ++ ", succs=" ++ show s ++ "}"
 
 mkPreds :: Cfg -> PredMap
 mkPreds Cfg {entry = entry, succs = succs} =
@@ -44,6 +44,15 @@ mkPreds Cfg {entry = entry, succs = succs} =
   where
     addSuccs addr succs preds = foldr (addSucc addr) preds succs
     addSucc addr succ preds = Map.insertWith (++) succ [addr] preds
+
+getCall :: Addr -> Insn -> Maybe Addr
+getCall addr insn = Nothing
+
+mkCalls :: InsnMap -> CallMap
+mkCalls = Map.foldrWithKey addInsn Map.empty
+  where 
+    addInsn addr insn calls = maybe calls (addCall calls addr) (getCall addr insn)
+    addCall calls addr target = Map.insert addr target calls
 
 jmpTarget insn = case target of
     (Imm addr) -> addr
@@ -61,15 +70,6 @@ succ insn
     grps = groups insn
     next = address insn + size insn
 
-getCall :: Addr -> Insn -> Maybe Addr
-getCall addr insn = Nothing
-
-mkCalls :: InsnMap -> CallMap
-mkCalls = Map.foldrWithKey addInsn Map.empty
-  where 
-    addInsn addr insn calls = maybe calls (addCall calls addr) (getCall addr insn)
-    addCall calls addr target = Map.insert addr target calls
-
 recDecent cfg [] = cfg
 recDecent cfg (addr:wl) =
     case disassInstr e addr of
@@ -77,7 +77,7 @@ recDecent cfg (addr:wl) =
         Just insn -> recDecent cfg' wl'
           where
             cfg' = Cfg {elf = e, entry = entry, insns = insns', succs = succs'}
-            wl' = filter (not . visited) s
+            wl' = filter (not . visited) s ++ wl
             visited addr = Map.member addr insns'             
             insns' = Map.insert addr insn insns
             succs' = Map.insert addr s succs
