@@ -206,21 +206,21 @@ constructBlocks insns succs preds blocks (addr:wl) =
     blockFrom addr = (reverse addrs, nextAddrs)
       where
         (addrs, nextAddrs) = blockFrom' addr []
-        blockFrom' addr block
-            -- about to branch... end with this one
-            | length (succ) > 1 = (addr : block, succ)
-            -- already past the end... don't include in BB but enqueue in wl
-            | length (pred) > 1 = (block, [addr])
-            | otherwise = case succ of
-                [] -> (addr : block, [])
-                [next] -> blockFrom' next (addr : block)
+        blockFrom' addr block = case succ of
+            [] -> (addr : block, [])
+            [next] -> case nextPred of
+                [] -> error "no way this should have no preds"
+                [_] -> blockFrom' next (addr : block)
+                _ -> (addr : block, succ)
+              where
+                nextPred = case Map.lookup next preds of
+                    Just pred -> pred
+                    Nothing -> error $ show addr ++ " not in preds"
+            _ -> (addr : block, succ)
           where
             succ = case Map.lookup addr succs of
                 Just succ -> succ
                 Nothing -> error $ show addr ++ " not in succs"
-            pred = case Map.lookup addr preds of
-                Just pred -> pred
-                Nothing -> error $ show addr ++ " not in preds"
 
 constructSuccs succs addrBlocks = Map.map getSuccs addrBlocks
   where
@@ -242,7 +242,7 @@ toTwo xCfg = Cfg2.Cfg
   where
     succsTwo = constructSuccs succs addrs
     blocks = Map.map (liftAddrs flagInfo insns) addrs
-    addrs = constructBlocks insns succs preds Map.empty [entry]
+    addrs = trace' (\a -> show a) (constructBlocks insns succs preds Map.empty [entry])
     flagInfo = Flags.analyze liftOp xCfg
     elf = CfgX.elf xCfg
     entry = CfgX.entry xCfg
