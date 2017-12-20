@@ -31,14 +31,10 @@ instance Show Cfg where
         join "\n" (map showBlock (Map.keys blocks))
       where
         showBlock addr =
-            "0x" ++ addrStr ++ ":\n" ++ asmStr ++ "\n\tsucc: " ++ succStr
+            addrStr ++ ":\n" ++ asmStr
           where
-            addrStr = showHex addr ""
-            succStr = show $ case Map.lookup addr succs of
-                Just s -> s
-                Nothing -> error $ "succs at addr " ++ show addr ++ " DNE"
+            addrStr = show addr
             asmStr = join "\n" (map (((++) "\t") . show) block)
             block = case Map.lookup addr blocks of
                 Just b -> b
                 Nothing -> error $ "block at addr " ++ show addr ++ " DNE"
-
