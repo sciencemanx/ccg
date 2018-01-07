@@ -242,7 +242,7 @@ toTwo xCfg = Cfg2.Cfg
   where
     succsTwo = constructSuccs succs addrs
     blocks = Map.map (liftAddrs flagInfo insns) addrs
-    addrs = trace' (\a -> show a) (constructBlocks insns succs preds Map.empty [entry])
+    addrs = constructBlocks insns succs preds Map.empty [entry]
     flagInfo = Flags.analyze liftOp xCfg
     elf = CfgX.elf xCfg
     entry = CfgX.entry xCfg

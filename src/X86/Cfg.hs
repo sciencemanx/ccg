@@ -36,7 +36,7 @@ data Cfg = Cfg
     } deriving (Eq)
 
 instance Show Cfg where
-    show Cfg {insns = is, succs = s} = "Cfg{insns=" ++ show is ++ ", succs=" ++ show s ++ "}"
+    show Cfg {insns = is, succs = s} = "Cfg{insns=" ++ show is ++ "}"
 
 mkPreds :: Cfg -> PredMap
 mkPreds Cfg {entry = entry, succs = succs} =

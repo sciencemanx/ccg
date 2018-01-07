@@ -3,6 +3,7 @@ module Common
     , SizeT
     , RegMode(..)
     , Width(..)
+    , CmpOp(..)
     , trace
     , trace'
     ) where
@@ -28,5 +29,32 @@ data Width =
     | Qword -- 64 bit
     | Oword -- 128 bit
     deriving (Eq, Show)
+
+data CmpOp =
+      Eq
+    | Ne
+    -- signed
+    | Gt
+    | Ge
+    | Lt
+    | Le
+    -- unsigned
+    | A
+    | Ae
+    | B
+    | Be
+    deriving (Eq)
+
+instance Show CmpOp where
+    show Eq = "=="
+    show Ne = "!="
+    show Gt = ">s"
+    show Ge = ">=s"
+    show Lt = "<s"
+    show Le = "<=s"
+    show A = ">"
+    show Ae = ">="
+    show B = "<"
+    show Be = "<="
 
 trace' f a = trace (f a) a

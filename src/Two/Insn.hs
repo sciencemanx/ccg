@@ -26,21 +26,6 @@ data CondOp =
     -- | Shift{R/L, U/A} dont want to do this now
     deriving (Eq)
 
-data CmpOp =
-      Eq
-    | Ne
--- signed
-    | Gt
-    | Ge
-    | Lt
-    | Le
--- unsigned
-    | A
-    | Ae
-    | B
-    | Be
-    deriving (Eq)
-
 type CondExp = (Op, CondOp, Op)
 
 -- l {+,-,&,|} r {>,<,=...} 0
@@ -66,8 +51,9 @@ data Insn =
     | Call Op -- s()
     | Cast Op Op Width -- d = (w) s ... aka CBW/CWDE/CDQE
     | Conv Op Op Op Width -- d:d' = (w) s ... aka CWD/CDQ/CQO
-    | SDiv Op Op Op -- q' = q:q' / s; q = q:q' % s
-    | UDiv Op Op Op -- q' = q:q' / s; q = q:q' % s
+    | SDiv Op Op Op -- q' = q:q' / s
+    | UDiv Op Op Op -- q' = q:q' / s 
+    | Rem Op Op Op -- q = q:q' % s
     | SMul Op Op -- l = l * r
     | UMul Op Op Op -- d:d' = d' * s
     | Goto Op -- goto s
@@ -85,9 +71,7 @@ data Insn =
     | Xor Op Op -- d ^= s
     | Ret
     -- TODO:
-    -- Switch Op (Map opval Addr)
-    -- Mod
-    -- Rem
+    -- Switch Op Addr (Map opval Addr)
     -- NOTES:
     -- Dec: elab to op -= 1
     -- Inc: elab to op += 1
@@ -104,18 +88,6 @@ instance Show CondOp where
     show And' = "&"
     show Or' = "|"
     show Xor' = "^"
-
-instance Show CmpOp where
-    show Eq = "=="
-    show Ne = "!="
-    show Gt = ">s"
-    show Ge = ">=s"
-    show Lt = "<s"
-    show Le = "<=s"
-    show A = ">"
-    show Ae = ">="
-    show B = "<"
-    show Be = "<="
 
 join = intercalate
 
