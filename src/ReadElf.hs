@@ -2,10 +2,13 @@
 module ReadElf
     ( readElf
     , symbol2addr
+    , addr2symbol
     , readAddr
     ) where
 
 import Debug.Trace (trace)
+
+import qualified Data.ByteString.Char8
 
 import Data.ByteString (ByteString, unpack)      
 import Data.List (find)
@@ -25,6 +28,18 @@ symbol2addr elf sym = fmap steValue $ find matchingName symtab
     matchingName symEntry = case steName symEntry of
         (_, Just name) -> name == sym
         _ -> False
+
+addr2symbol :: Elf -> Word64 -> Maybe String
+addr2symbol elf addr = extractName $ find rightAddr symtab
+  where 
+    symtab = concat $ parseSymbolTables elf
+    rightAddr symEntry = steValue symEntry == addr
+    extractName :: Maybe ElfSymbolTableEntry -> Maybe String
+    extractName entry = case entry of
+      Just entry -> case steName entry of
+        (_, Just name) -> Just $ Data.ByteString.Char8.unpack name
+        _ -> Nothing
+      Nothing -> Nothing
 
 findSeg :: [ElfSegment] -> Word64 -> Maybe ElfSegment
 findSeg segments addr = find inSegment segments

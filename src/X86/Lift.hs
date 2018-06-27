@@ -10,11 +10,15 @@ import Data.Map ((!))
 import qualified Hapstone.Internal.X86 as X86
 
 import Common
+import Two.Subroutine
+
 import qualified X86.FlagState as Flags
 import qualified X86.Cfg as CfgX
 import qualified Two.Cfg as Cfg2
 import qualified X86.Insn as InsnX
 import qualified Two.Insn as Insn2
+import qualified X86.Program as ProgramX
+import qualified Two.StackRelative as StackRelative
 
 liftReg InsnX.Inv = Insn2.BaseReg (-1)
 liftReg InsnX.Rsp = Insn2.BaseReg 0
@@ -233,19 +237,23 @@ liftAddrs flagInfo insns = concat . (map liftOne)
   where
     liftOne addr = (liftInsn flagInfo) $ insns ! addr
 
-toTwo :: CfgX.Cfg -> Cfg2.Cfg
-toTwo xCfg = Cfg2.Cfg 
-    { Cfg2.elf = elf
-    , Cfg2.entry = entry
-    , Cfg2.blocks = blocks
-    , Cfg2.succs = succsTwo}
+liftSub addr cfgX = Sub addr (StackRelative.adjust cfg2)
   where
+    cfg2 = Cfg2.Cfg 
+        { Cfg2.elf = elf
+        , Cfg2.entry = entry
+        , Cfg2.blocks = blocks
+        , Cfg2._succs = succsTwo}
     succsTwo = constructSuccs succs addrs
     blocks = Map.map (liftAddrs flagInfo insns) addrs
     addrs = constructBlocks insns succs preds Map.empty [entry]
-    flagInfo = Flags.analyze liftOp xCfg
-    elf = CfgX.elf xCfg
-    entry = CfgX.entry xCfg
-    insns = CfgX.insns xCfg
-    preds = CfgX.mkPreds xCfg
-    succs = CfgX.succs xCfg
+    flagInfo = Flags.analyze liftOp cfgX
+    elf = CfgX.elf cfgX
+    entry = CfgX.entry cfgX
+    insns = CfgX.insns cfgX
+    preds = CfgX.mkPreds cfgX
+    succs = CfgX.succs cfgX
+
+toTwo :: ProgramX.Program -> Program
+toTwo (ProgramX.Program entry subs) = Prog $ Map.mapWithKey liftSub subs
+  

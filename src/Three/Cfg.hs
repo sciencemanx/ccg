@@ -3,6 +3,7 @@ module Three.Cfg
     , BasicBlock(..)
     , BlockMap
     , SuccMap
+    , insns
     ) where
 
 import qualified Data.Map as Map
@@ -25,6 +26,14 @@ data Cfg = Cfg
     } deriving (Eq)
 
 join = intercalate
+
+insns :: Cfg -> Map.Map Loc Insn
+insns cfg = Map.foldrWithKey extractInsns Map.empty bs
+  where
+    extractInsns addr bbinsns insns =
+        foldr (addInsn addr) insns (zip [0..] bbinsns)
+    addInsn addr (idx, insn) insns = Map.insert (addr, idx) insn insns
+    Cfg {blocks = bs} = cfg
 
 instance Show Cfg where
     show Cfg {blocks = blocks, succs = succs} =
