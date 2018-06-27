@@ -11,7 +11,7 @@ module X86.Cfg
 
 import Prelude hiding (succ)
 
-import Data.Maybe (fromJust, maybeToList)
+import Data.Maybe (fromJust, maybeToList, mapMaybe)
 import Data.Elf (Elf)
 import Data.Word (Word64)
 import qualified Data.Map as Map
@@ -45,14 +45,12 @@ mkPreds Cfg {entry = entry, succs = succs} =
     addSuccs addr succs preds = foldr (addSucc addr) preds succs
     addSucc addr succ preds = Map.insertWith (++) succ [addr] preds
 
-getCall :: Addr -> Insn -> Maybe Addr
-getCall addr insn = Nothing
+getCall :: Insn -> Maybe Addr
+getCall Insn {instr=X86.X86InsCall, operands=[Op {value=Imm n}]} = Just n
+getCall _ = Nothing
 
-mkCalls :: InsnMap -> CallMap
-mkCalls = Map.foldrWithKey addInsn Map.empty
-  where 
-    addInsn addr insn calls = maybe calls (addCall calls addr) (getCall addr insn)
-    addCall calls addr target = Map.insert addr target calls
+mkCalls :: Cfg -> [Addr]
+mkCalls cfg = mapMaybe getCall (Map.elems $ insns cfg)
 
 jmpTarget insn = case target of
     (Imm addr) -> addr
