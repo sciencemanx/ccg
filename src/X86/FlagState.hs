@@ -12,6 +12,7 @@ import qualified Data.Map as Map
 import qualified Hapstone.Internal.X86 as X86
 
 import Common
+
 import qualified Two.Insn as Insn2
 import qualified X86.Insn as InsnX
 import qualified X86.Cfg as Cfg
@@ -24,9 +25,11 @@ data FlagState =
 
 type FlagMap = Map.Map Addr FlagState
 
+-- TODO: finish flow function
 flow :: (InsnX.Op -> Insn2.Op) -> InsnX.Insn -> FlagState -> FlagState
 flow lift insn state = case (instr, ops) of
-    (X86.X86InsCmp, [l, r]) -> Flags (lift l ,Insn2.Minus, lift r)
+    (X86.X86InsCmp, [l, r]) -> Flags (lift l, Insn2.Minus, lift r)
+    (X86.X86InsTest, [l, r]) -> Flags (lift l, Insn2.And', lift r)
     _ -> state
   where
     instr = InsnX.instr insn
