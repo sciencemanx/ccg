@@ -1,4 +1,4 @@
-module X86.Insn 
+module X86.Insn
     ( Insn(..)
     , Op(..)
     , OpValue(..)
@@ -180,7 +180,7 @@ fromCsReg X86.X86RegR15w    = (R15, X)
 fromCsReg X86.X86RegR15d    = (R15, E)
 fromCsReg X86.X86RegR15     = (R15, R)
 
-fromCsOpMemStruct m = MemStruct 
+fromCsOpMemStruct m = MemStruct
     { base = base
     , index = index
     , scale = scale
@@ -188,7 +188,7 @@ fromCsOpMemStruct m = MemStruct
     }
   where
     (base, _) = fromCsReg $ X86.base m
-    (index, _) = fromCsReg $ X86.index m 
+    (index, _) = fromCsReg $ X86.index m
     scale = X86.scale m
     disp = X86.disp' m
 
@@ -205,8 +205,8 @@ fromCsOp csop = Op { value = val, width = sz  }
 fromCsInsn csinsn = Insn { address = a, instr = i, operands = ops, groups = grps, size = sz, str = s }
   where
     a = Capstone.address csinsn
-    i = toEnum $ fromIntegral $ Capstone.insnId csinsn -- convert insnId (word32) to X86Insn
-    ops = map fromCsOp (getCsOps csinsn)
+    i = bug (toEnum $ fromIntegral $ Capstone.insnId csinsn) -- convert insnId (word32) to X86Insn
+    ops = map fromCsOp (bug (getCsOps csinsn))
     grps = map (toEnum . fromIntegral) (getCsGroups csinsn)
     sz = toEnum $ length $ Capstone.bytes csinsn
     s = Capstone.mnemonic csinsn ++ " " ++ Capstone.opStr csinsn

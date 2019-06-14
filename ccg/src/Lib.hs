@@ -21,13 +21,13 @@ disass filename = do
     let cfg3 = toThree cfg2
     let tree = toTree cfg3
     let ast = toAst tree
-    -- putStrLn $ show cfgX
-    -- putStrLn "Two Address:"
-    -- putStrLn $ show cfg2
-    -- putStrLn "Three Address:"
-    -- putStrLn $ show cfg3
-    -- putStrLn "Tree:"
-    -- putStrLn $ show tree
-    -- putStrLn "Ast:"
+    putStrLn $ show cfgX
+    putStrLn "Two Address:"
+    putStrLn $ show cfg2
+    putStrLn "Three Address:"
+    putStrLn $ show cfg3
+    putStrLn "Tree:"
+    putStrLn $ show tree
+    putStrLn "Ast:"
     putStrLn $ show ast
     return ()

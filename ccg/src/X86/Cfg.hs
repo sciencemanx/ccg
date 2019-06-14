@@ -1,4 +1,4 @@
-module X86.Cfg 
+module X86.Cfg
     ( construct
     , mkPreds
     , mkCalls
@@ -20,6 +20,7 @@ import qualified Hapstone.Internal.X86 as X86
 
 import X86.Disass (disassInstr)
 import X86.Insn
+import Common (bug)
 
 type Addr = Word64
 
@@ -28,7 +29,7 @@ type SuccMap = Map.Map Addr [Addr]
 type CallMap = Map.Map Addr Addr
 type PredMap = Map.Map Addr [Addr]
 
-data Cfg = Cfg 
+data Cfg = Cfg
     { elf :: Elf
     , entry :: Addr
     , insns :: InsnMap
@@ -76,7 +77,7 @@ recDecent cfg (addr:wl) =
           where
             cfg' = Cfg {elf = e, entry = entry, insns = insns', succs = succs'}
             wl' = filter (not . visited) s ++ wl
-            visited addr = Map.member addr insns'             
+            visited addr = Map.member addr insns'
             insns' = Map.insert addr insn insns
             succs' = Map.insert addr s succs
             s = succ insn
@@ -86,5 +87,5 @@ recDecent cfg (addr:wl) =
 
 construct :: Elf -> Addr -> Cfg
 construct elf addr = recDecent init [addr]
-  where 
+  where
     init = Cfg {elf = elf, entry = addr, insns = Map.empty, succs = Map.empty}

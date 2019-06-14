@@ -17,6 +17,7 @@ Vagrant.configure("2") do |config|
     curl -sSL https://get.haskellstack.org/ | sh
     git clone https://github.com/aquynh/capstone.git
     cd capstone
+    git checkout 4.0-alpha5
     ./make.sh install
   SHELL
 end
